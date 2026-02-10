@@ -1,0 +1,17 @@
+[package]
+name = "surfio-rs"
+version = "0.2.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "surfio_rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = "0.28"
+fast-float = "0.2"
+memmap = "0.7.0"
+byteorder = "1.5"
+numpy = "0.28.0"
+ryu = "1.0.23"
