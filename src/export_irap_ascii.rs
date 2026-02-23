@@ -20,9 +20,9 @@ fn write_values<W: Write>(header: &IrapHeader, values: &[f32], out: &mut W) -> s
     let mut values_on_current_line = 0;
 
     // File format is Column-Major, but internal storage is Row-Major.
-    for j in 0..header.ncol {
-        for i in 0..header.nrow {
-            let idx = (i * header.ncol + j) as usize;
+    for row in 0..header.nrow {
+        for col in 0..header.ncol {
+            let idx = (col * header.nrow + row) as usize;
             let val = values[idx];
 
             if values_on_current_line > 0 {

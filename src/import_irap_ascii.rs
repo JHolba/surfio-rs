@@ -116,7 +116,7 @@ fn read_header(buffer: &[u8]) -> Result<(irap::IrapHeader, usize)> {
 }
 
 fn validate_header(header: &IrapHeader) -> Result<()> {
-    if header.ncol <= 0 || header.nrow <= 0 {
+    if header.ncol == 0 || header.nrow == 0 {
         return Err(format!(
             "Invalid dimensions: ncol={}, nrow={}",
             header.ncol, header.nrow

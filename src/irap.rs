@@ -1,43 +1,78 @@
+use pyo3::prelude::*;
+
+pub const IRAP_HEADER_ID: i32 = -996;
+pub const UNDEF_MAP_IRAP_ASCII: f32 = 9999900.0;
+pub const UNDEF_MAP_IRAP_BINARY: f32 = 1e30;
+
 #[pymethods]
 impl IrapHeader {
     #[new]
     #[pyo3(signature = (
-        ncol = None, nrow = None, xori = None, yori = None, xmax = None, ymax = None,
-        xinc = None, yinc = None, rot = None, xrot = None, yrot = None
+        ncol, nrow, xori = 0.0, yori = 0.0, xmax = 0.0, ymax = 0.0,
+        xinc = 1.0, yinc = 1.0, rot = 0.0, xrot = 0.0, yrot = 0.0
     ))]
     fn py_new(
-        ncol: Option<u32>,
-        nrow: Option<u32>,
-        xori: Option<f64>,
-        yori: Option<f64>,
-        xmax: Option<f64>,
-        ymax: Option<f64>,
-        xinc: Option<f64>,
-        yinc: Option<f64>,
-        rot: Option<f64>,
-        xrot: Option<f64>,
-        yrot: Option<f64>,
+        ncol: u32,
+        nrow: u32,
+        xori: f64,
+        yori: f64,
+        xmax: f64,
+        ymax: f64,
+        xinc: f64,
+        yinc: f64,
+        rot: f64,
+        xrot: f64,
+        yrot: f64,
     ) -> Self {
         IrapHeader {
-            ncol: ncol.unwrap_or(0),
-            nrow: nrow.unwrap_or(0),
-            xori: xori.unwrap_or(0.0),
-            yori: yori.unwrap_or(0.0),
-            xmax: xmax.unwrap_or(0.0),
-            ymax: ymax.unwrap_or(0.0),
-            xinc: xinc.unwrap_or(1.0),
-            yinc: yinc.unwrap_or(1.0),
-            rot: rot.unwrap_or(0.0),
-            xrot: xrot.unwrap_or(0.0),
-            yrot: yrot.unwrap_or(0.0),
+            ncol,
+            nrow,
+            xori,
+            yori,
+            xmax,
+            ymax,
+            xinc,
+            yinc,
+            rot,
+            xrot,
+            yrot,
         }
     }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "<IrapHeader(ncol={}, nrow={}, xori={}, yori={}, xmax={}, ymax={}, xinc={}, yinc={}, rot={}, xrot={}, yrot={})>",
+            self.ncol,
+            self.nrow,
+            self.xori,
+            self.yori,
+            self.xmax,
+            self.ymax,
+            self.xinc,
+            self.yinc,
+            self.rot,
+            self.xrot,
+            self.yrot
+        )
+    }
+
+    fn __eq__(&self, other: &Self) -> bool {
+        self == other
+    }
+
+    fn __ne__(&self, other: &Self) -> bool {
+        self != other
+    }
+
+    #[classattr]
+    fn id() -> i32 {
+        IRAP_HEADER_ID
+    }
 }
+
 impl IrapHeader {
-    pub const ID: i32 = -996;
+    pub const ID: i32 = IRAP_HEADER_ID;
 }
-pub const UNDEF_MAP_IRAP_ASCII: f32 = 9999900.0;
-pub const UNDEF_MAP_IRAP_BINARY: f32 = 1e30;
 
 #[pyclass(from_py_object)]
 #[derive(Default, Clone, PartialEq, Debug)]
