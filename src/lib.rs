@@ -61,7 +61,7 @@ impl PartialEq for IrapSurface {
 #[pymethods]
 impl IrapSurface {
     #[new]
-    fn py_new(py: Python, header: Py<IrapHeader>, values: Py<PyArray2<f32>>) -> Self {
+    fn py_new(_py: Python, header: Py<IrapHeader>, values: Py<PyArray2<f32>>) -> Self {
         IrapSurface { header, values }
     }
 

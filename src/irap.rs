@@ -101,7 +101,6 @@ pub struct IrapHeader {
     pub yrot: f64,
 }
 
-use pyo3::prelude::*;
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Irap {
