@@ -18,26 +18,6 @@ def compare_xtgeo_surface_with_surfio_header(
     assert xtgeo_surface.rotation == surfio_header.rot
 
 
-def _headers_equal(h1, h2):
-    if h1.ncol != h2.ncol or h1.nrow != h2.nrow:
-        return False
-    float_fields = [
-        "xori",
-        "yori",
-        "xmax",
-        "ymax",
-        "xinc",
-        "yinc",
-        "rot",
-        "xrot",
-        "yrot",
-    ]
-    for f in float_fields:
-        if not np.isclose(getattr(h1, f), getattr(h2, f), atol=1e-12, rtol=0):
-            return False
-    return True
-
-
 @pytest.mark.parametrize("func", [str, repr])
 def test_irap_surface_string_representation(func):
     surface = surfio.IrapSurface(
@@ -203,7 +183,7 @@ def test_import_and_export_are_inverse():
         np.arange(6, dtype=np.float32).reshape((3, 2)),
     )
     roundtrip = surfio.IrapSurface.from_ascii_string(surface.to_ascii_string())
-    assert _headers_equal(roundtrip.header, surface.header)
+    assert roundtrip.header == surface.header
     assert np.array_equal(roundtrip.values, surface.values)
 
 
@@ -215,7 +195,7 @@ def test_import_and_export_file_are_inverse(tmp_path):
     )
     surface.to_ascii_file(str(irap_path))
     roundtrip = surfio.IrapSurface.from_ascii_file(str(irap_path))
-    assert _headers_equal(roundtrip.header, surface.header)
+    assert roundtrip.header == surface.header
     assert np.array_equal(roundtrip.values, surface.values)
 
 def test_xtgeo_can_import_data_exported_from_surfio(tmp_path):
@@ -262,7 +242,7 @@ def test_surfio_can_export_values_in_fortran_order():
     srf_imported = surfio.IrapSurface.from_ascii_string(buffer)
 
     assert np.allclose(srf.values, srf_imported.values)
-    assert _headers_equal(srf.header, srf_imported.header)
+    assert srf.header == srf_imported.header
 
 
 def test_can_mutate_imported_surface():

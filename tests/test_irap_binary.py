@@ -21,26 +21,6 @@ def compare_xtgeo_surface_with_surfio_header(
     assert xtgeo_surface.rotation == surfio_header.rot
 
 
-def _headers_equal(h1, h2):
-    if h1.ncol != h2.ncol or h1.nrow != h2.nrow:
-        return False
-    float_fields = [
-        "xori",
-        "yori",
-        "xmax",
-        "ymax",
-        "xinc",
-        "yinc",
-        "rot",
-        "xrot",
-        "yrot",
-    ]
-    for f in float_fields:
-        if not np.isclose(getattr(h1, f), getattr(h2, f), atol=1e-12, rtol=0):
-            return False
-    return True
-
-
 def test_reading_empty_file_errors(tmp_path):
     irap_path = tmp_path / "test.irap"
     irap_path.write_text("")
@@ -74,7 +54,7 @@ def test_surfio_can_import_data_exported_from_surfio():
     srf_imported = surfio.IrapSurface.from_binary_buffer(buffer)
 
     assert np.allclose(srf.values, srf_imported.values)
-    assert _headers_equal(srf.header, srf_imported.header)
+    assert srf.header == srf_imported.header
 
 
 def test_surfio_can_export_values_in_fortran_order():
@@ -86,7 +66,7 @@ def test_surfio_can_export_values_in_fortran_order():
     srf_imported = surfio.IrapSurface.from_binary_buffer(buffer)
 
     assert np.allclose(srf.values, srf_imported.values)
-    assert _headers_equal(srf.header, srf_imported.header)
+    assert srf.header == srf_imported.header
 
 
 def test_xtgeo_can_import_data_exported_from_surfio(tmp_path):
