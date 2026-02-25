@@ -78,7 +78,7 @@ fn write_values_fortran<W: Write>(values: &[f32], out: &mut W) -> std::io::Resul
     Ok(())
 }
 
-pub fn to_ascii_file(path: String, data: &Irap) -> Result<()> {
+pub fn to_file(path: String, data: &Irap) -> Result<()> {
     let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
 
@@ -88,7 +88,7 @@ pub fn to_ascii_file(path: String, data: &Irap) -> Result<()> {
     Ok(())
 }
 
-pub fn to_ascii_string(data: &Irap) -> Result<String> {
+pub fn to_string(data: &Irap) -> Result<String> {
     let mut buffer = Vec::new();
     write_header(&data.header, &mut buffer)?;
     write_values(&data.header, &data.values, &mut buffer)?;
@@ -96,7 +96,7 @@ pub fn to_ascii_string(data: &Irap) -> Result<String> {
     Ok(String::from_utf8(buffer)?)
 }
 
-pub fn to_ascii_file_fortran(path: String, header: &IrapHeader, values: &[f32]) -> Result<()> {
+pub fn to_file_fortran(path: String, header: &IrapHeader, values: &[f32]) -> Result<()> {
     let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
 
@@ -106,7 +106,7 @@ pub fn to_ascii_file_fortran(path: String, header: &IrapHeader, values: &[f32]) 
     Ok(())
 }
 
-pub fn to_ascii_string_fortran(header: &IrapHeader, values: &[f32]) -> Result<String> {
+pub fn to_string_fortran(header: &IrapHeader, values: &[f32]) -> Result<String> {
     let mut buffer = Vec::new();
     write_header(header, &mut buffer)?;
     write_values_fortran(values, &mut buffer)?;

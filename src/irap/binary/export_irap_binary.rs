@@ -115,7 +115,7 @@ fn write_values_fortran<W: Write>(values: &[f32], out: &mut W) -> std::io::Resul
     Ok(())
 }
 
-pub fn to_binary_file(path: String, data: &Irap) -> Result<()> {
+pub fn to_file(path: String, data: &Irap) -> Result<()> {
     let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
 
@@ -125,14 +125,14 @@ pub fn to_binary_file(path: String, data: &Irap) -> Result<()> {
     Ok(())
 }
 
-pub fn to_binary_buffer(data: &Irap) -> Result<Vec<u8>> {
+pub fn to_buffer(data: &Irap) -> Result<Vec<u8>> {
     let mut buffer = Vec::new();
     write_header(&data.header, &mut buffer)?;
     write_values(&data.header, &data.values, &mut buffer)?;
     Ok(buffer)
 }
 
-pub fn to_binary_file_fortran(path: String, header: &IrapHeader, values: &[f32]) -> Result<()> {
+pub fn to_file_fortran(path: String, header: &IrapHeader, values: &[f32]) -> Result<()> {
     let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
 
@@ -142,7 +142,7 @@ pub fn to_binary_file_fortran(path: String, header: &IrapHeader, values: &[f32])
     Ok(())
 }
 
-pub fn to_binary_buffer_fortran(header: &IrapHeader, values: &[f32]) -> Result<Vec<u8>> {
+pub fn to_buffer_fortran(header: &IrapHeader, values: &[f32]) -> Result<Vec<u8>> {
     let mut buffer = Vec::new();
     write_header(header, &mut buffer)?;
     write_values_fortran(values, &mut buffer)?;

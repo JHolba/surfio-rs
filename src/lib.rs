@@ -1,15 +1,10 @@
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
 
-mod export_irap_ascii;
-mod export_irap_binary;
-mod import_irap_ascii;
-mod import_irap_binary;
-mod irap;
+pub mod irap;
 mod utils;
 
-use crate::irap::Irap;
-pub use irap::IrapHeader;
+pub use irap::{Irap, IrapHeader};
 use numpy::ndarray::Array2;
 use numpy::{IntoPyArray, PyArray2, PyArrayMethods, PyUntypedArrayMethods};
 
@@ -87,31 +82,30 @@ impl IrapSurface {
         self.__repr__(py)
     }
 
-    // Static methods (class methods in Python)
     #[staticmethod]
     fn from_ascii_file(py: Python, path: String) -> PyResult<IrapSurface> {
-        let irap = import_irap_ascii::read_file(path)
+        let irap = irap::ascii::from_file(path)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
         irap_to_surface(py, &irap)
     }
 
     #[staticmethod]
     fn from_ascii_string(py: Python, data: String) -> PyResult<IrapSurface> {
-        let irap = import_irap_ascii::read_string(&data)
+        let irap = irap::ascii::from_string(&data)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
         irap_to_surface(py, &irap)
     }
 
     #[staticmethod]
     fn from_binary_file(py: Python, path: String) -> PyResult<IrapSurface> {
-        let irap = import_irap_binary::read_file(path)
+        let irap = irap::binary::from_file(path)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))?;
         irap_to_surface(py, &irap)
     }
 
     #[staticmethod]
     fn from_binary_buffer(py: Python, data: &[u8]) -> PyResult<IrapSurface> {
-        let irap = import_irap_binary::read_buffer(data)
+        let irap = irap::binary::from_buffer(data)
             .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
         irap_to_surface(py, &irap)
     }
@@ -128,11 +122,11 @@ impl IrapSurface {
                 .extract(py)
                 .expect("Unable to extract Irap header");
             utils::fill_header(&mut header);
-            export_irap_ascii::to_ascii_string_fortran(&header, slice)
+            irap::ascii::to_string_fortran(&header, slice)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))
         } else {
             let data = surface_to_irap(py, self);
-            export_irap_ascii::to_ascii_string(&data)
+            irap::ascii::to_string(&data)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
         }
     }
@@ -149,11 +143,11 @@ impl IrapSurface {
                 .extract(py)
                 .expect("Unable to extract Irap header");
             utils::fill_header(&mut header);
-            export_irap_ascii::to_ascii_file_fortran(path, &header, slice)
+            irap::ascii::to_file_fortran(path, &header, slice)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
         } else {
             let data = surface_to_irap(py, self);
-            export_irap_ascii::to_ascii_file(path, &data)
+            irap::ascii::to_file(path, &data)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
         }
     }
@@ -170,11 +164,11 @@ impl IrapSurface {
                 .extract(py)
                 .expect("Unable to extract Irap header");
             utils::fill_header(&mut header);
-            export_irap_binary::to_binary_buffer_fortran(&header, slice)
+            irap::binary::to_buffer_fortran(&header, slice)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?
         } else {
             let data = surface_to_irap(py, self);
-            export_irap_binary::to_binary_buffer(&data)
+            irap::binary::to_buffer(&data)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?
         };
 
@@ -193,11 +187,11 @@ impl IrapSurface {
                 .extract(py)
                 .expect("Unable to extract Irap header");
             utils::fill_header(&mut header);
-            export_irap_binary::to_binary_file_fortran(path, &header, slice)
+            irap::binary::to_file_fortran(path, &header, slice)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))
         } else {
             let data = surface_to_irap(py, self);
-            export_irap_binary::to_binary_file(path, &data)
+            irap::binary::to_file(path, &data)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))
         }
     }

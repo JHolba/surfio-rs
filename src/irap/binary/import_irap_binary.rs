@@ -1,5 +1,7 @@
-use crate::irap::{self, Irap, IrapHeader};
-use crate::utils;
+use crate::{
+    irap::{self, Irap, IrapHeader},
+    utils,
+};
 use byteorder::{BigEndian, ReadBytesExt};
 use memmap::Mmap;
 use std::fs::File;
@@ -129,7 +131,7 @@ fn read_values(cursor: &mut Cursor<&[u8]>, ncol: usize, nrow: usize) -> Result<V
     Ok(values)
 }
 
-pub fn read_file(path: String) -> Result<Irap> {
+pub fn from_file(path: String) -> Result<Irap> {
     let file = File::open(path)?;
     let mmap = unsafe { Mmap::map(&file)? };
     let mut cursor = Cursor::new(&mmap[..]);
@@ -140,7 +142,7 @@ pub fn read_file(path: String) -> Result<Irap> {
     Ok(Irap { header, values })
 }
 
-pub fn read_buffer(buffer: &[u8]) -> Result<Irap> {
+pub fn from_buffer(buffer: &[u8]) -> Result<Irap> {
     let mut cursor = Cursor::new(buffer);
     let header = read_header(&mut cursor)?;
     let values = read_values(&mut cursor, header.ncol as usize, header.nrow as usize)?;

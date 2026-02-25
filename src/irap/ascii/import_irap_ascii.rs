@@ -147,7 +147,7 @@ fn read_values(buffer: &[u8], ncol: usize, nrow: usize) -> Result<Vec<f32>> {
     Ok(values)
 }
 
-pub fn read_file(path: String) -> Result<Irap> {
+pub fn from_file(path: String) -> Result<Irap> {
     let file = File::open(path)?;
     let mmap = unsafe { Mmap::map(&file)? };
 
@@ -159,7 +159,7 @@ pub fn read_file(path: String) -> Result<Irap> {
     Ok(Irap { header, values })
 }
 
-pub fn read_string(data: &str) -> Result<Irap> {
+pub fn from_string(data: &str) -> Result<Irap> {
     let buffer = data.as_bytes();
 
     let (header, index) = read_header(buffer)?;
