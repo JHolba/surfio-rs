@@ -9,7 +9,7 @@ name = "surfio_rs"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = "0.28"
+pyo3 = "0.28.2"
 fast-float = "0.2"
 memmap = "0.7.0"
 byteorder = "1.5"
