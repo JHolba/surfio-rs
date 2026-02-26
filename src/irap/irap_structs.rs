@@ -4,6 +4,12 @@ pub const IRAP_HEADER_ID: i32 = -996;
 pub const UNDEF_MAP_IRAP_ASCII: f32 = 9999900.0;
 pub const UNDEF_MAP_IRAP_BINARY: f32 = 1e30;
 
+#[derive(PartialEq, Eq)]
+pub enum ArrayOrder {
+    C,
+    Fortran,
+}
+
 #[pymethods]
 impl IrapHeader {
     #[new]
@@ -100,7 +106,6 @@ pub struct IrapHeader {
     #[pyo3(get, set)]
     pub yrot: f64,
 }
-
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Irap {

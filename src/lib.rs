@@ -8,6 +8,8 @@ pub use irap::{Irap, IrapHeader};
 use numpy::ndarray::Array2;
 use numpy::{IntoPyArray, PyArray2, PyArrayMethods, PyUntypedArrayMethods};
 
+use crate::irap::ArrayOrder;
+
 #[pyclass(from_py_object, name = "IrapSurface")]
 #[derive(Debug)]
 pub struct IrapSurface {
@@ -113,20 +115,24 @@ impl IrapSurface {
     fn to_ascii_string(&self, py: Python) -> PyResult<String> {
         let arr = self.values.as_ref();
         let arr = arr.cast_bound::<PyArray2<f32>>(py).unwrap();
-        let f_ordered = arr.is_fortran_contiguous();
+        let array_ordering = if arr.is_fortran_contiguous() {
+            ArrayOrder::Fortran
+        } else {
+            ArrayOrder::C
+        };
 
-        if f_ordered {
+        if array_ordering == ArrayOrder::Fortran {
             let slice: &[f32] = unsafe { std::slice::from_raw_parts(arr.data(), arr.len()) };
             let mut header: IrapHeader = self
                 .header
                 .extract(py)
                 .expect("Unable to extract Irap header");
             utils::fill_header(&mut header);
-            irap::ascii::to_string_fortran(&header, slice)
+            irap::ascii::to_string(&header, slice, array_ordering)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))
         } else {
             let data = surface_to_irap(py, self);
-            irap::ascii::to_string(&data)
+            irap::ascii::to_string(&data.header, &data.values, array_ordering)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
         }
     }
@@ -134,20 +140,24 @@ impl IrapSurface {
     fn to_ascii_file(&self, py: Python, path: String) -> PyResult<()> {
         let arr = self.values.as_ref();
         let arr = arr.cast_bound::<PyArray2<f32>>(py).unwrap();
-        let f_ordered = arr.is_fortran_contiguous();
+        let array_ordering = if arr.is_fortran_contiguous() {
+            ArrayOrder::Fortran
+        } else {
+            ArrayOrder::C
+        };
 
-        if f_ordered {
+        if array_ordering == ArrayOrder::Fortran {
             let slice: &[f32] = unsafe { std::slice::from_raw_parts(arr.data(), arr.len()) };
             let mut header: IrapHeader = self
                 .header
                 .extract(py)
                 .expect("Unable to extract Irap header");
             utils::fill_header(&mut header);
-            irap::ascii::to_file_fortran(path, &header, slice)
+            irap::ascii::to_file(path, &header, slice, array_ordering)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
         } else {
             let data = surface_to_irap(py, self);
-            irap::ascii::to_file(path, &data)
+            irap::ascii::to_file(path, &data.header, &data.values, array_ordering)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyIOError, _>(e.to_string()))
         }
     }
@@ -164,11 +174,11 @@ impl IrapSurface {
                 .extract(py)
                 .expect("Unable to extract Irap header");
             utils::fill_header(&mut header);
-            irap::binary::to_buffer_fortran(&header, slice)
+            irap::binary::to_buffer(&header, slice, ArrayOrder::Fortran)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?
         } else {
             let data = surface_to_irap(py, self);
-            irap::binary::to_buffer(&data)
+            irap::binary::to_buffer(&data.header, &data.values, ArrayOrder::C)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?
         };
 
@@ -187,11 +197,11 @@ impl IrapSurface {
                 .extract(py)
                 .expect("Unable to extract Irap header");
             utils::fill_header(&mut header);
-            irap::binary::to_file_fortran(path, &header, slice)
+            irap::binary::to_file(path, &header, slice, ArrayOrder::Fortran)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))
         } else {
             let data = surface_to_irap(py, self);
-            irap::binary::to_file(path, &data)
+            irap::binary::to_file(path, &data.header, &data.values, ArrayOrder::C)
                 .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))
         }
     }

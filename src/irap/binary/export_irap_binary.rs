@@ -1,4 +1,4 @@
-use crate::irap::{Irap, IrapHeader, UNDEF_MAP_IRAP_BINARY};
+use crate::irap::{ArrayOrder, IrapHeader, UNDEF_MAP_IRAP_BINARY};
 use byteorder::{BigEndian, WriteBytesExt};
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -38,7 +38,23 @@ fn write_header<W: Write>(header: &IrapHeader, out: &mut W) -> std::io::Result<(
     Ok(())
 }
 
-fn write_values<W: Write>(header: &IrapHeader, values: &[f32], out: &mut W) -> std::io::Result<()> {
+fn write_chunk_buffer<W: Write>(chunk_buffer: &mut Vec<f32>, out: &mut W) -> std::io::Result<()> {
+    let size_bytes = (chunk_buffer.len() * 4) as i32;
+    out.write_i32::<BigEndian>(size_bytes)?;
+    for v in &*chunk_buffer {
+        out.write_f32::<BigEndian>(*v)?;
+    }
+    out.write_i32::<BigEndian>(size_bytes)?;
+    chunk_buffer.clear();
+
+    Ok(())
+}
+
+fn write_values_c_order<W: Write>(
+    header: &IrapHeader,
+    values: &[f32],
+    out: &mut W,
+) -> std::io::Result<()> {
     let mut chunk_buffer = Vec::with_capacity(PER_LINE_BINARY);
 
     for row in 0..header.nrow {
@@ -54,31 +70,19 @@ fn write_values<W: Write>(header: &IrapHeader, values: &[f32], out: &mut W) -> s
             chunk_buffer.push(val_to_write);
 
             if chunk_buffer.len() == PER_LINE_BINARY {
-                let size_bytes = (PER_LINE_BINARY * 4) as i32;
-                out.write_i32::<BigEndian>(size_bytes)?;
-                for v in &chunk_buffer {
-                    out.write_f32::<BigEndian>(*v)?;
-                }
-                out.write_i32::<BigEndian>(size_bytes)?;
-                chunk_buffer.clear();
+                write_chunk_buffer(&mut chunk_buffer, out)?;
             }
         }
     }
 
-    // Write remaining
     if !chunk_buffer.is_empty() {
-        let size_bytes = (chunk_buffer.len() * 4) as i32;
-        out.write_i32::<BigEndian>(size_bytes)?;
-        for v in &chunk_buffer {
-            out.write_f32::<BigEndian>(*v)?;
-        }
-        out.write_i32::<BigEndian>(size_bytes)?;
+        write_chunk_buffer(&mut chunk_buffer, out)?;
     }
 
     Ok(())
 }
 
-fn write_values_fortran<W: Write>(values: &[f32], out: &mut W) -> std::io::Result<()> {
+fn write_values_f_order<W: Write>(values: &[f32], out: &mut W) -> std::io::Result<()> {
     let mut chunk_buffer = Vec::with_capacity(PER_LINE_BINARY);
 
     for val in values {
@@ -91,60 +95,47 @@ fn write_values_fortran<W: Write>(values: &[f32], out: &mut W) -> std::io::Resul
         chunk_buffer.push(val_to_write);
 
         if chunk_buffer.len() == PER_LINE_BINARY {
-            // Write chunk
-            let size_bytes = (PER_LINE_BINARY * 4) as i32;
-            out.write_i32::<BigEndian>(size_bytes)?;
-            for v in &chunk_buffer {
-                out.write_f32::<BigEndian>(*v)?;
-            }
-            out.write_i32::<BigEndian>(size_bytes)?;
-            chunk_buffer.clear();
+            write_chunk_buffer(&mut chunk_buffer, out)?;
         }
     }
 
-    // Write remaining
     if !chunk_buffer.is_empty() {
-        let size_bytes = (chunk_buffer.len() * 4) as i32;
-        out.write_i32::<BigEndian>(size_bytes)?;
-        for v in &chunk_buffer {
-            out.write_f32::<BigEndian>(*v)?;
-        }
-        out.write_i32::<BigEndian>(size_bytes)?;
+        write_chunk_buffer(&mut chunk_buffer, out)?;
     }
 
     Ok(())
 }
 
-pub fn to_file(path: String, data: &Irap) -> Result<()> {
-    let file = File::create(path)?;
-    let mut writer = BufWriter::new(file);
-
-    write_header(&data.header, &mut writer)?;
-    write_values(&data.header, &data.values, &mut writer)?;
-
+fn write_irap<W: Write>(
+    header: &IrapHeader,
+    values: &[f32],
+    array_order: ArrayOrder,
+    mut out: &mut W,
+) -> std::io::Result<()> {
+    write_header(header, &mut out)?;
+    if array_order == ArrayOrder::C {
+        write_values_c_order(header, values, &mut out)?;
+    } else {
+        write_values_f_order(values, &mut out)?;
+    }
     Ok(())
 }
 
-pub fn to_buffer(data: &Irap) -> Result<Vec<u8>> {
-    let mut buffer = Vec::new();
-    write_header(&data.header, &mut buffer)?;
-    write_values(&data.header, &data.values, &mut buffer)?;
-    Ok(buffer)
-}
-
-pub fn to_file_fortran(path: String, header: &IrapHeader, values: &[f32]) -> Result<()> {
+pub fn to_file(
+    path: String,
+    header: &IrapHeader,
+    values: &[f32],
+    array_order: ArrayOrder,
+) -> Result<()> {
     let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
 
-    write_header(header, &mut writer)?;
-    write_values_fortran(values, &mut writer)?;
-
+    write_irap(header, values, array_order, &mut writer)?;
     Ok(())
 }
 
-pub fn to_buffer_fortran(header: &IrapHeader, values: &[f32]) -> Result<Vec<u8>> {
+pub fn to_buffer(header: &IrapHeader, values: &[f32], array_order: ArrayOrder) -> Result<Vec<u8>> {
     let mut buffer = Vec::new();
-    write_header(header, &mut buffer)?;
-    write_values_fortran(values, &mut buffer)?;
+    write_irap(header, values, array_order, &mut buffer)?;
     Ok(buffer)
 }

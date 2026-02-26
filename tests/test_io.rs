@@ -1,5 +1,8 @@
 use core::default::Default;
-use surfio_rs::{Irap, IrapHeader, irap};
+use surfio_rs::{
+    Irap, IrapHeader,
+    irap::{self, ArrayOrder},
+};
 
 fn create_dummy_irap() -> Irap {
     let header = IrapHeader {
@@ -11,9 +14,7 @@ fn create_dummy_irap() -> Irap {
         ymax: 200.0 + (2.0 - 1.0) * 10.0,
         xinc: 10.0,
         yinc: 10.0,
-        rot: Default::default(),
-        xrot: Default::default(),
-        yrot: Default::default(),
+        ..Default::default()
     };
 
     let values = vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
@@ -24,7 +25,7 @@ fn create_dummy_irap() -> Irap {
 #[test]
 fn test_round_trip_ascii_string() {
     let irap = create_dummy_irap();
-    let ascii = irap::ascii::to_string(&irap).unwrap();
+    let ascii = irap::ascii::to_string(&irap.header, &irap.values, ArrayOrder::C).unwrap();
     let irap_read = irap::ascii::from_string(&ascii).unwrap();
 
     assert_eq!(irap.header, irap_read.header);
@@ -48,7 +49,7 @@ fn test_round_trip_binary_buffer() {
 fn test_round_trip_ascii_file() {
     let irap = create_dummy_irap();
     let path = "test_output.irap";
-    irap::ascii::to_file(path.to_string(), &irap).unwrap();
+    irap::ascii::to_file(path.to_string(), &irap.header, &irap.values, ArrayOrder::C).unwrap();
     let irap_read = irap::ascii::from_file(path.to_string()).unwrap();
 
     assert_eq!(irap.header, irap_read.header);

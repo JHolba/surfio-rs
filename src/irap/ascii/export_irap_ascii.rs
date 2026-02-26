@@ -1,4 +1,4 @@
-use crate::irap::{Irap, IrapHeader};
+use crate::irap::{ArrayOrder, IrapHeader};
 
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -16,7 +16,11 @@ fn write_header<W: Write>(header: &IrapHeader, out: &mut W) -> std::io::Result<(
     Ok(())
 }
 
-fn write_values<W: Write>(header: &IrapHeader, values: &[f32], out: &mut W) -> std::io::Result<()> {
+fn write_values_c_order<W: Write>(
+    header: &IrapHeader,
+    values: &[f32],
+    out: &mut W,
+) -> std::io::Result<()> {
     let mut values_on_current_line = 0;
 
     // File format is Column-Major, but internal storage is Row-Major.
@@ -49,7 +53,7 @@ fn write_values<W: Write>(header: &IrapHeader, values: &[f32], out: &mut W) -> s
     Ok(())
 }
 
-fn write_values_fortran<W: Write>(values: &[f32], out: &mut W) -> std::io::Result<()> {
+fn write_values_f_order<W: Write>(values: &[f32], out: &mut W) -> std::io::Result<()> {
     let mut line = String::with_capacity(128);
     let mut values_on_current_line = 0;
     let mut ryu_buf = ryu::Buffer::new();
@@ -78,38 +82,36 @@ fn write_values_fortran<W: Write>(values: &[f32], out: &mut W) -> std::io::Resul
     Ok(())
 }
 
-pub fn to_file(path: String, data: &Irap) -> Result<()> {
-    let file = File::create(path)?;
-    let mut writer = BufWriter::new(file);
-
-    write_header(&data.header, &mut writer)?;
-    write_values(&data.header, &data.values, &mut writer)?;
-
+fn write_irap<W: Write>(
+    header: &IrapHeader,
+    values: &[f32],
+    array_order: ArrayOrder,
+    mut out: &mut W,
+) -> std::io::Result<()> {
+    write_header(header, &mut out)?;
+    if array_order == ArrayOrder::C {
+        write_values_c_order(header, values, &mut out)?;
+    } else {
+        write_values_f_order(values, &mut out)?;
+    }
     Ok(())
 }
 
-pub fn to_string(data: &Irap) -> Result<String> {
-    let mut buffer = Vec::new();
-    write_header(&data.header, &mut buffer)?;
-    write_values(&data.header, &data.values, &mut buffer)?;
-
-    Ok(String::from_utf8(buffer)?)
-}
-
-pub fn to_file_fortran(path: String, header: &IrapHeader, values: &[f32]) -> Result<()> {
+pub fn to_file(
+    path: String,
+    header: &IrapHeader,
+    values: &[f32],
+    array_order: ArrayOrder,
+) -> Result<()> {
     let file = File::create(path)?;
     let mut writer = BufWriter::new(file);
 
-    write_header(header, &mut writer)?;
-    write_values_fortran(values, &mut writer)?;
-
+    write_irap(header, values, array_order, &mut writer)?;
     Ok(())
 }
 
-pub fn to_string_fortran(header: &IrapHeader, values: &[f32]) -> Result<String> {
+pub fn to_string(header: &IrapHeader, values: &[f32], array_order: ArrayOrder) -> Result<String> {
     let mut buffer = Vec::new();
-    write_header(header, &mut buffer)?;
-    write_values_fortran(values, &mut buffer)?;
-
+    write_irap(header, values, array_order, &mut buffer)?;
     Ok(String::from_utf8(buffer)?)
 }
